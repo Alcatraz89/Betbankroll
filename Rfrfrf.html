@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoBOT Bet BankRoll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #2E86C1;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            float: left;
+            width: 48%;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        select, input {
+            width: 30%;
+            padding: 10px;
+            margin: 10px 1%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        button {
+            cursor: pointer;
+        }
+        button.calcola, button.crea, button.vinta, button.persa {
+            width: 36%;
+            font-size: 14px;
+        }
+        button.calcola {
+            background-color: #2E86C1;
+            color: white;
+        }
+        button.calcola:hover {
+            background-color: #1B4F72;
+        }
+        button.crea {
+            background-color: #28A745;
+            color: white;
+        }
+        button.crea:hover {
+            background-color: #218838;
+        }
+        button.reset {
+            width: 100%;
+            background-color: #C0392B;
+            color: white;
+        }
+        button.reset:hover {
+            background-color: #922B21;
+        }
+        button.vinta {
+            background-color: #28A745;
+            color: white;
+        }
+        button.vinta:hover {
+            background-color: #218838;
+        }
+        button.persa {
+            background-color: #8B0000;
+            color: white;
+        }
+        button.persa:hover {
+            background-color: #5A0000;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .quadrati {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .quadrato {
+            width: 20px;
+            height: 20px;
+            margin: 2px;
+            border: 1px solid #ddd;
+        }
+        .vinto {
+            background-color: #28A745;
+        }
+        .perso {
+            background-color: #8B0000;
+        }
+        .hidden {
+            display: none;
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>RoBOT Bet BankRoll</h1>
+    <div class="container">
+        <label for="cassa-iniziale">Cassa Iniziale (€)</label>
+        <input type="number" id="cassa-iniziale" min="10">
+
+        <label for="totali-eventi">Eventi Totali</label>
+        <input type="number" id="totali-eventi" min="1">
+
+        <label for="quota-media">Quota Media</label>
+        <select id="quota-media">
+            <option value="1.80">1.80</option>
+            <option value="2.00">2.00</option>
+            <option value="2.20">2.20</option>
+            <option value="2.50">2.50</option>
+            <option value="3.00">3.00</option>
+        </select>
+
+        <label for="strategia">Strategia</label>
+        <select id="strategia">
+            <option value="0.50">Standard (50%)</option>
+            <option value="0.60">Medio (60%)</option>
+            <option value="0.70">Aggressivo (70%)</option>
+        </select>
+
+        <label for="bankroll">Percentuale Bankroll</label>
+        <select id="bankroll">
+            <option value="0.05">5%</option>
+            <option value="0.10">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.20">20%</option>
+            <option value="0.25">25%</option>
+            <option value="0.30">30%</option>
+            <option value="0.50">50%</option>
+            <option value="0.70">70%</option>
+        </select>
+
+        <br>
+        <button class="calcola" onclick="calcolaResa()">Calcola</button>
+        <button class="crea" onclick="creaGioco()">Crea</button>
+    </div>
+
+    <div class="results hidden" id="resa-info">
+        <div><strong>Vincita Totale:</strong> <span id="vincita-totale"></span> €</div>
+        <div><strong>Vincita Netta:</strong> <span id="vincita-netta"></span> €</div>
+        <div><strong>Nota:</strong> La vincita calcolata è approssimativa.</div>
+    </div>
+
+    <div class="results hidden" id="gioco">
+        <div class="result" id="puntata"></div>
+        <div>
+            <button class="vinta" onclick="aggiornaCassa('vinta')" id="button-vinta">Vinta</button>
+            <button class="persa" onclick="aggiornaCassa('persa')" id="button-persa">Persa</button>
+        </div>
+        <div class="result" id="cassa-attuale"></div>
+        <div class="quadrati" id="quadrati"></div>
+    </div>
+
+    <button class="reset" onclick="reset()">Reset</button>
+
+    <script>
+        let cassaIniziale = 0;
+        let cassaAttuale = 0;
+        let giocataCorrente = 0;
+        let quotaMedia = 0;
+        let percentualeVittorie = 0;
+        let bankrollPercentuale = 0;
+        let eventiGiocati = 0;
+        let totaliEventi = 0;
+        let progressioneCompletata = false;
+
+        function calcolaResa() {
+            // Prendi i valori dai campi di input
+            cassaIniziale = parseFloat(document.getElementById('cassa-iniziale').value);
+            totaliEventi = parseInt(document.getElementById('totali-eventi').value);
+            quotaMedia = parseFloat(document.getElementById('quota-media').value);
+            percentualeVittorie = parseFloat(document.getElementById('strategia').value);
+            bankrollPercentuale = parseFloat(document.getElementById('bankroll').value);
+
+            // Verifica che i dati siano validi
+            if (isNaN(cassaIniziale) || isNaN(totaliEventi) || isNaN(quotaMedia) ||
+                cassaIniziale <= 0 || totaliEventi <= 0 || quotaMedia < 1.01) {
+                alert("Per favore, inserisci valori validi.");
+                return;
+            }
+
+            // Calcoli Masaniello
+            const rendimento = (quotaMedia - 1) * percentualeVittorie;
+            const vincitaTotale = cassaIniziale * (1 + rendimento);
+            const vincitaNetta = vincitaTotale - cassaIniziale;
+
+            // Mostra le informazioni di resa
+            document.getElementById('vincita-totale').textContent = vincitaTotale.toFixed(2);
+            document.getElementById('vincita-netta').textContent = vincitaNetta.toFixed(2);
+            document.getElementById('resa-info').classList.remove('hidden');
+            document.getElementById('gioco').classList.add('hidden');
+        }
+
+        function creaGioco() {
+            if (progressioneCompletata) return;
+
+            bankrollPercentuale = parseFloat(document.getElementById('bankroll').value);
+
+            // Calcolo puntata iniziale basata sulla cassa iniziale o attuale
+            giocataCorrente = arrotondaGiocata(cassaAttuale > 0 ? cassaAttuale * bankrollPercentuale / totaliEventi : cassaIniziale * bankrollPercentuale / totaliEventi);
+            cassaAttuale = cassaAttuale > 0 ? cassaAttuale : cassaIniziale;
+            eventiGiocati = 0;
+
+            // Mostra la sezione di gioco
+            document.getElementById('puntata').textContent = `Puntata: €${giocataCorrente.toFixed(2)}`;
+            document.getElementById('cassa-attuale').textContent = `Cassa Attuale: €${cassaAttuale.toFixed(2)}`;
+            document.getElementById('resa-info').classList.add('hidden');
+            document.getElementById('gioco').classList.remove('hidden');
+        }
+
+        function aggiornaCassa(risultato) {
+            if (progressioneCompletata) return;
+
+            const quadratiDiv = document.getElementById("quadrati");
+            if (risultato === "vinta") {
+                cassaAttuale += giocataCorrente * (quotaMedia - 1);
+                const quadrato = document.createElement("div");
+                quadrato.className = "quadrato vinto";
+                quadratiDiv.appendChild(quadrato);
+            } else if (risultato === "persa") {
+                cassaAttuale -= giocataCorrente;
+                const quadrato = document.createElement("div");
+                quadrato.className = "quadrato perso";
+                quadratiDiv.appendChild(quadrato);
+            }
+
+            cassaAttuale = Math.max(0, cassaAttuale);
+            eventiGiocati++;
+
+            if (eventiGiocati >= totaliEventi) {
+                document.getElementById("puntata").textContent = "Progressione completata!";
+                document.getElementById("cassa-attuale").textContent = `Cassa Finale: €${cassaAttuale.toFixed(2)}`;
+                progressioneCompletata = true;
+
+                // Disabilita i pulsanti
+                document.getElementById("button-vinta").classList.add("disabled");
+                document.getElementById("button-persa").classList.add("disabled");
+                return;
+            }
+
+            giocataCorrente = arrotondaGiocata(
+                cassaAttuale * bankrollPercentuale / (totaliEventi - eventiGiocati)
+            );
+
+            document.getElementById("puntata").textContent = `Puntata: €${giocataCorrente.toFixed(2)}`;
+            document.getElementById("cassa-attuale").textContent = `Cassa Attuale: €${cassaAttuale.toFixed(2)}`;
+        }
+
+        function reset() {
+            cassaIniziale = 0;
+            cassaAttuale = 0;
+            giocataCorrente = 0;
+            eventiGiocati = 0;
+            progressioneCompletata = false;
+
+            document.getElementById("cassa-iniziale").value = "";
+            document.getElementById("totali-eventi").value = "";
+            document.getElementById("resa-info").classList.add("hidden");
+            document.getElementById("gioco").classList.add("hidden");
+            document.getElementById("quadrati").innerHTML = "";
+
+            // Abilita i pulsanti
+            document.getElementById("button-vinta").classList.remove("disabled");
+            document.getElementById("button-persa").classList.remove("disabled");
+        }
+
+        function arrotondaGiocata(giocata) {
+            return Math.max(1, Math.round(giocata * 2) / 2);
+        }
+    </script>
+</body>
+</html>
