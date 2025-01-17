@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoBOT Bet BankRoll - Aggiornato</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #2E86C1;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            float: left;
+            width: 48%;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        select, input {
+            width: 38%;
+            padding: 10px;
+            margin: 10px 1%;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        button {
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button.calcola, button.crea {
+            width: 40%;
+            font-size: 18px;
+            display: inline-block;
+        }
+        button.calcola {
+            background-color: #2E86C1;
+            color: white;
+        }
+        button.calcola:hover {
+            background-color: #1B4F72;
+        }
+        button.crea {
+            background-color: #28A745;
+            color: white;
+        }
+        button.crea:hover {
+            background-color: #218838;
+        }
+        button.reset {
+            width: 50%;
+            background-color: #C0392B;
+            color: white;
+        }
+        button.reset:hover {
+            background-color: #922B21;
+        }
+        button.vinta {
+            background-color: #28A745;
+            color: white;
+        }
+        button.vinta:hover {
+            background-color: #218838;
+        }
+        button.persa {
+            background-color: #8B0000;
+            color: white;
+        }
+        button.persa:hover {
+            background-color: #5A0000;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .quadrati {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .quadrato {
+            width: 20px;
+            height: 20px;
+            margin: 2px;
+            border: 1px solid #ddd;
+        }
+        .vinto {
+            background-color: #28A745;
+        }
+        .perso {
+            background-color: #8B0000;
+        }
+        .hidden {
+            display: none;
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            padding: 0 20px;
+        }
+        .footer button {
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .footer button.info {
+            background-color: #f0ad4e;
+            color: white;
+        }
+        .footer button.info:hover {
+            background-color: #ec971f;
+        }
+        .footer button.telegram {
+            background-color: #0088cc;
+            color: white;
+        }
+        .footer button.telegram:hover {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <h1>RoBOT Bet BankRoll</h1>
+    <div class="container">
+        <label for="cassa-iniziale">Cassa Iniziale (€)</label>
+        <input type="number" id="cassa-iniziale" min="10">
+
+        <label for="totali-eventi">Eventi Totali</label>
+        <input type="number" id="totali-eventi" min="1">
+
+        <label for="quota-media">Quota Media</label>
+        <select id="quota-media">
+            <option value="1.80">1.80</option>
+            <option value="2.00">2.00</option>
+            <option value="2.20">2.20</option>
+            <option value="2.50">2.50</option>
+            <option value="3.00">3.00</option>
+        </select>
+
+        <label for="strategia">Strategia</label>
+        <select id="strategia">
+            <option value="0.50">Standard</option>
+            <option value="0.60">Medio</option>
+            <option value="0.70">Aggressivo</option>
+        </select>
+
+        <label for="bankroll">Percentuale Bankroll</label>
+        <select id="bankroll">
+            <option value="0.05">5%</option>
+            <option value="0.10">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.20">20%</option>
+            <option value="0.25">25%</option>
+            <option value="0.30">30%</option>
+        </select>
+
+        <label for="limita-puntate">Limita Puntate Post-Obiettivo</label>
+        <input type="checkbox" id="limita-puntate">
+        <br><br>
+        <button class="calcola" onclick="calcolaResa()">Calcola</button>
+        <button class="crea" onclick="creaGioco()">Crea</button>
+    </div>
+
+    <div class="footer">
+        <button class="info" onclick="mostraInfo()">?</button>
+        <button class="telegram" onclick="location.href='https://t.me/robotbetchatlive'">Telegram</button>
+    </div>
+
+    <script>
+        function calcolaResa() {
+            let cassaIniziale = parseFloat(document.getElementById('cassa-iniziale').value);
+            let quotaMedia = parseFloat(document.getElementById('quota-media').value);
+            let eventiTotali = parseInt(document.getElementById('totali-eventi').value);
+            let percentualeBankroll = parseFloat(document.getElementById('bankroll').value);
+            let limitaPuntate = document.getElementById('limita-puntate').checked;
+
+            if (limitaPuntate) {
+                percentualeBankroll = Math.min(percentualeBankroll, 0.10); // Limita al 10% del bankroll attuale
+            }
+
+            let puntataBase = cassaIniziale * percentualeBankroll;
+
+            // Aggiungi randomizzazione ±5%
+            let randomFactor = (Math.random() * 0.1 - 0.05); // Valore casuale tra -0.05 e +0.05
+            let puntata = puntataBase + (puntataBase * randomFactor);
+
+            let roi = ((puntata * quotaMedia) - puntata) / cassaIniziale * 100;
+
+            alert(`Puntata calcolata: €${puntata.toFixed(2)}
+ROI stimato: ${roi.toFixed(2)}%`);
+        }
+
+        function mostraInfo() {
+            alert("Guida alle impostazioni:
+" +
+                "- Cassa Iniziale (€): Inserisci la cassa di partenza.
+" +
+                "- Eventi Totali: Numero di eventi che vuoi giocare.
+" +
+                "- Quota Media: Quota media delle tue scommesse.
+" +
+                "- Strategia: Scegli il livello di rischio (Standard, Medio, Aggressivo).
+" +
+                "- Percentuale Bankroll: Percentuale del bankroll da utilizzare.
+" +
+                "- Limita Puntate Post-Obiettivo: Mantiene costanti le puntate dopo aver raggiunto l'obiettivo.");
+        }
+    </script>
+</body>
+</html>
